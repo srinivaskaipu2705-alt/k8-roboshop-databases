@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: configmap
+metadata:
+    name: shipping
+    namespace: roboshop
+data:
+    CART_ENDPOINT: "cart:8080"
+    DB_HOST: "mysql"
+---
+apiVersion: apps/v1
+kind: deployment
+metadata: 
+    name: shipping
+    namespace: roboshop  # name space where the pod is going to be created
+    # these are replica-set labels. 
+    labels: 
+        project: roboshop 
+        component: shipping 
+        environment: dev
+        tier: backend 
+        purpose: deployment
+spec:
+    replicas: 1
+    selector:
+        #This is used to select the pods and create the replicaset for those pods. 
+        matchLabels:
+            project: roboshop 
+            component: shipping 
+            environment: dev
+            tier: backend   
+            purpose: deployment
+    # pod defination  
+    template: 
+        metadata: 
+            labels:
+                project: roboshop 
+                component: shipping 
+                environment: dev
+                tier: backend   
+                purpose: deployment
+        spec: 
+            containers: 
+            - name: shipping 
+              image: joindevops/shipping:v1  # it should be there in our docker hub
+              imagePullPolicy: Always
+              envFrom:
+                - configMapRef:
+                        name: shipping
+              ports:
+                - name: liveness-port
+                  containerPort: 8080
+              resources:
+                requests:
+                    cpu: "100m"
+                    memory: "128Mi"
+                limits:
+                    cpu: "100m"
+                    memory: "128Mi"   
+              readinessProbe:
+                httpGet:
+                    port: liveness-port
+                    path: /health
+                      initialDelaySeconds: 10
+                periodSeconds: 5
+                failureThreshold: 2
+                successThreshold: 1 
+              livenessProbe:
+                httpGet:
+                    port: liveness-port
+                    path: /health
+                initialDelaySeconds: 8
+                periodSeconds: 4
+                failureThreshold: 2
+                successThreshold: 1 
+---
+#Creating a service for the mongodb pod
+apiVersion: v1
+kind: service
+metadata: 
+    name: shipping
+    namespace: roboshop  # name space where the pod is going to be created
+    # these are service labels. 
+spec: 
+    selector: 
+        project: roboshop 
+        component: shipping 
+        environment: dev
+        tier: backend
+        purpose: service
+    ports:
+        - protocol: TCP 
+          port: 8080 #service port, which can be anything
+          targetPort: 8080 #pod port, which should match the container port
+---
+# horizontal pod autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodSutoscaler
+metadata:
+    name: shipping
+    namespace: roboshop
+    lables:
+        project: roboshop 
+        component: shipping 
+        environment: dev
+        tier: backend
+        purpose: service
+spec:
+    scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: shipping
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+    - type: Resource
+      resoure:
+        name: cpu
+        target:
+            type: Utilization
+            averageUtilization: 5  # In real projects upto 70
