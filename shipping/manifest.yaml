@@ -51,16 +51,16 @@ spec:
                   containerPort: 8080
               resources:
                 requests:
-                    cpu: "100m"
-                    memory: "128Mi"
+                    cpu: "200m"
+                    memory: "256Mi"
                 limits:
-                    cpu: "100m"
-                    memory: "128Mi"   
+                    cpu: "400m"
+                    memory: "512Mi"   
               readinessProbe:
                 httpGet:
                     port: liveness-port
                     path: /health
-                initialDelaySeconds: 10
+                initialDelaySeconds: 60
                 periodSeconds: 5
                 failureThreshold: 2
                 successThreshold: 1 
@@ -68,7 +68,7 @@ spec:
                 httpGet:
                     port: liveness-port
                     path: /health
-                initialDelaySeconds: 8
+                initialDelaySeconds: 60
                 periodSeconds: 4
                 failureThreshold: 2
                 successThreshold: 1 
