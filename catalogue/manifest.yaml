@@ -60,7 +60,7 @@ spec:
                 httpGet:
                     port: liveness-port
                     path: /health
-                      initialDelaySeconds: 10
+                initialDelaySeconds: 10
                 periodSeconds: 5
                 failureThreshold: 2
                 successThreshold: 1 
