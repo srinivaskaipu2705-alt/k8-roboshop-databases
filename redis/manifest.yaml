@@ -1,0 +1,70 @@
+#service, headless service, statefulset, pvc
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: roboshop
+spec:
+  selector:
+    project: roboshop
+    component: redis
+    tier: db
+  ports:
+    - protocol: TCP
+      port: 6379 #service port
+      targetPort: 6379 #container port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  namespace: roboshop
+spec:
+  clusterIP: None
+  selector:
+    project: roboshop
+    component: redis
+    tier: db
+  ports:
+    - protocol: TCP
+      port: 6379 #service port
+      targetPort: 6379 #container port
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: roboshop
+spec:
+  selector:
+    matchLabels:
+      project: roboshop
+      component: redis
+      tier: db
+  serviceName: "redis-headless"  #this should be headless service name
+  replicas: 2 # by default it will be 1
+  template: 
+    metadata:
+      lables:
+        project: roboshop
+        component: redis
+        tier: db
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.0
+        volumeMounts:
+        - name: redis
+          mountPath: /data
+  # pvc
+  volumeClaimTemplets:
+  - metadta : 
+      name : redis
+    spec:
+      acessModes: [ "ReadWriteOnce" ]
+      storageclass: "roboshop-ebs"
+      resources:
+        requests:
+          storage: 1Gi
+
+      

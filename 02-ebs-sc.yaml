@@ -1,0 +1,8 @@
+#storage class is created by admin. It is used to create PV dynamically. If we don't create a storage class, then we can create PV and PVC manually as shown in 03-ebs-static.yaml file.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: roboshop-ebs
+reclaimPolicy: Retain
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
